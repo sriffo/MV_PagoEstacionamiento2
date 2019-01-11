@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.tutorialesprogramacionya.proyecto019.MainActivity">
+
+    <EditText
+        android:id="@+id/et1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:ems="10"
+        android:hint="numero registro"
+        android:inputType="text" />
+
+    <EditText
+        android:id="@+id/et2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/et1"
+        android:layout_alignEnd="@+id/et1"
+        android:layout_alignRight="@+id/et1"
+        android:layout_marginTop="0dp"
+        android:ems="10"
+        android:hint="descripcion"
+        android:inputType="text|textPersonName" />
+
+    <EditText
+        android:id="@+id/et3"
+        android:layout_width="214dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/et2"
+        android:layout_alignEnd="@+id/et2"
+        android:layout_alignRight="@+id/et2"
+        android:layout_marginEnd="1dp"
+        android:layout_marginRight="1dp"
+        android:ems="10"
+        android:hint="tarifa"
+        android:inputType="numberDecimal" />
+
+    <EditText
+        android:id="@+id/et4"
+        android:layout_width="214dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/et2"
+        android:layout_alignEnd="@+id/et2"
+        android:layout_alignRight="@+id/et2"
+        android:layout_marginTop="52dp"
+        android:layout_marginEnd="0dp"
+        android:layout_marginRight="0dp"
+        android:ems="10"
+        android:hint="fecha"
+        android:inputType="numberDecimal" />
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/et3"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
+        android:onClick="alta"
+        android:text="Alta"
+        android:visibility="gone" />
+
+    <Button
+        android:id="@+id/button2"
+        android:layout_width="368dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="0dp"
+        android:layout_marginLeft="0dp"
+        android:layout_marginTop="190dp"
+        android:onClick="consultaporcodigo"
+        android:text="Consultar" />
+
+    <Button
+        android:id="@+id/button3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/button2"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginTop="0dp"
+        android:onClick="consultapordescripcion"
+        android:text="Consulta por descripcion"
+        android:visibility="gone" />
+
+    <Button
+        android:id="@+id/button4"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/button6"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="-292dp"
+        android:onClick="bajaporcodigo"
+        android:text="eliminar registro"
+        android:visibility="visible" />
+
+    <Button
+        android:id="@+id/button5"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/button4"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
+        android:onClick="modificacion"
+        android:text="Modificacion"
+        android:visibility="gone" />
+
+    <ToggleButton
+        android:id="@+id/tglReadWrite"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/et1"
+        android:layout_alignLeft="@+id/et1"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="38dp"
+        android:text="ToggleButton"
+        android:textOff="Escribir"
+        android:textOn="Leer"
+        tools:ignore="RtlCompat" />
+
+    <EditText
+        android:id="@+id/txtTagContent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginEnd="37dp"
+        android:layout_marginRight="37dp"
+        android:layout_marginBottom="42dp"
+        android:ems="10"
+        android:inputType="none|textPersonName" />
+
+    <TextView
+        android:id="@+id/txtuid"
+        android:layout_width="209dp"
+        android:layout_height="36dp"
+        android:layout_alignStart="@+id/txtTagContent"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="4dp"
+        android:layout_marginBottom="2dp" />
+
+    <Button
+        android:id="@+id/button6"
+        android:layout_width="368dp"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/et1"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginTop="292dp"
+        android:layout_marginEnd="0dp"
+        android:layout_marginRight="0dp"
+        android:onClick="borrar"
+        android:text="BORRAR TODOS LOS REGISTROS" />
+
+    <Button
+        android:id="@+id/button9"
+        android:layout_width="352dp"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/txtTagContent"
+        android:layout_alignStart="@+id/et1"
+        android:layout_marginStart="0dp"
+        android:layout_marginBottom="0dp"
+        android:onClick="limpiar"
+        android:text="LIMPIAR"
+        android:visibility="visible" />
+
+</RelativeLayout>
