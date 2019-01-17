@@ -1,7 +1,7 @@
 package com.tutorialesprogramacionya.proyecto019;
 
-import android.app.Activity;
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
@@ -9,49 +9,66 @@ import android.database.sqlite.SQLiteDatabase;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
+import android.nfc.NfcManager;
 import android.nfc.Tag;
 import android.nfc.tech.Ndef;
 import android.nfc.tech.NdefFormatable;
 import android.os.Parcelable;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 import android.app.PendingIntent;
-
+import com.loopj.android.http.*;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 
-public class MainActivity extends AppCompatActivity {
+import cz.msebera.android.httpclient.Header;
+
+public class MainActivity extends AppCompatActivity  {
+    /*Creacion de varibles*/
     private ArrayList<String> str_NfcTagId;
     private EditText et1,et2,et3,et4;
     NfcAdapter nfcAdapter;
-    ToggleButton tglReadWrite;
+    ToggleButton tglReadWrite,toggleButton3,toggleButton4;
     EditText txtTagContent;
     TextView txtuid;
     Button button6;
     Button button9;
+    Button button7;
     private String time;
     private int  numero;
+    private ListView lvlList;
+    private AsyncHttpClient cliente;
+    private String pre;
+    private String opcion="";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        /*Inicializacion de variables*/
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         nfcAdapter = NfcAdapter.getDefaultAdapter(this);
         tglReadWrite = (ToggleButton)findViewById(R.id.tglReadWrite);
+        toggleButton3= (ToggleButton)findViewById(R.id.toggleButton3);
+        toggleButton4= (ToggleButton)findViewById(R.id.toggleButton4);
         txtTagContent = (EditText)findViewById(R.id.txtTagContent);
         txtuid= (TextView)findViewById(R.id.txtuid);
         et1=(EditText)findViewById(R.id.et1);
@@ -60,14 +77,164 @@ public class MainActivity extends AppCompatActivity {
         button6= (Button)findViewById(R.id.button6);
         button9= (Button)findViewById(R.id.button9);
         et4=(EditText)findViewById(R.id.et4);
+        button7= (Button)findViewById(R.id.button7);
+        cliente = new AsyncHttpClient();
+        /*precio definido hasta implementar metodo de cobro*/
+         pre ="300";
+        lvlList = (ListView)findViewById(R.id.lvlList);
+        /*Se desactivan campos de textos*/
+        txtTagContent.setEnabled(false);
+        et1.setEnabled(false);
+        et2.setEnabled(false);
+        et3.setEnabled(false);
+        et4.setEnabled(false);
+        /*Este if verifica si esta habilitado el NFC*/
+       if (!nfcAdapter.isEnabled()){
+           /*Si esta deshabilitado se envia una alerta*/
+           new AlertDialog.Builder(this)
+                   .setTitle("Activa NFC")
+                   .setMessage("El lector no esta encendido")
+                   .setPositiveButton("Activar", new DialogInterface.OnClickListener() {
+                       @Override
+                       public void onClick(DialogInterface dialog, int which) {
+                    /*Se verifica version de android para desplegar menu de ajustes*/
+                           if (android.os.Build.VERSION.SDK_INT >= 16) {
+                               /*Menu actual*/
+                               startActivity(new Intent(android.provider.Settings.ACTION_NFC_SETTINGS));
+                           } else {
+                               /*Menu antiguo*/
+                               startActivity(new Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS));
+                           }
+
+                       }
+                   })   /*Se da la opcion de salir  no querer activar nfc */
+                   .setNegativeButton("Salir", new DialogInterface.OnClickListener() {
+                       @Override
+                       public void onClick(DialogInterface dialog, int which) {
+
+                           finish();
+                           System.exit(0);
+
+                       }
+                   })
+                   .show();
+
+        }
+
+        /*Este listener es para limpiar, activar y descativar botones de entrada y salida*/
+        tglReadWrite.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                /*si esta en leer se desactivan los botones*/
+                if (tglReadWrite.isChecked()){
+                    txtTagContent.setText("");
+                    txtuid.setText("");
+                    et1.setText("");
+                    et2.setText("");
+                    et3.setText("");
+                    et4.setText("");
+                    toggleButton3.setEnabled(false);
+                    toggleButton4.setEnabled(false);
+                }else{
+                    /*si esta enescribir se activan los botones*/
+                    txtuid.setText("");
+                    et1.setText("");
+                    et2.setText("");
+                    et3.setText("");
+                    et4.setText("");
+                    toggleButton3.setEnabled(true);
+                    toggleButton4.setEnabled(true);
+                }
+            }
+        });
+
+             /*Listeners para bloquear botones si otro se aprieta (entrada y salida) */
+        toggleButton3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (toggleButton3.isChecked()){
+                    toggleButton4.setEnabled(false);
+                }else{
+                    toggleButton4.setEnabled(true);
+
+                }}
+        });
+
+        toggleButton4.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (toggleButton4.isChecked()){
+                toggleButton3.setEnabled(false);
+            }else{
+                    toggleButton3.setEnabled(true);
+
+                }}
+        });
+
+
+
+        /*Validacion de que no hay leido una tarjeta*/
+            button7.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+
+                    if (txtuid.getText().toString().isEmpty()){
+                        Toast.makeText(MainActivity.this, "No ha leido ninguna Tarjeta!!!!!", Toast.LENGTH_SHORT).show();
+                }else{
+                      /*Activa activity mostrar datos*/
+                        Intent i= new Intent(MainActivity.this,Mostrar.class);
+                        i.putExtra("nserie", txtuid.getText().toString());
+                        startActivity(i);
+
+                    }
+                }
+        });
 
     }
+/*Modulos para obtener datos e insertar en BD externa*/
+    private void Almacenar(){
+          int num =getultimo();
+          Datos d = new Datos();
+          d.setCod(num);
+          d.setNserie(txtuid.getText().toString());
+          d.setDescripcion(opcion.trim());
+          d.setFecha_registro(time);
+          d.setPrecio(pre);
+          insertar(d);
+
+
+          }
+
+
+          private void insertar(Datos d){
+              /*Toast.makeText(this, "esta en insertar", Toast.LENGTH_SHORT).show();
+              Toast.makeText(this, "datos"+d.getCod()+d.getNserie()+d.getDescripcion()
+                      +d.getFecha_registro()+d.getPrecio(), Toast.LENGTH_SHORT).show();*/
+             String url = "https://appnfc.000webhostapp.com/agregar.php?";
+             String parametros = "cod="+d.getCod()+"&nserie="+d.getNserie()+"&descripcion="+d.getDescripcion()+"&precio="+d.getPrecio()+"&fecha_registro="+d.getFecha_registro();
+             // Toast.makeText(this, parametros, Toast.LENGTH_SHORT).show();
+
+             cliente.post(url+parametros, new AsyncHttpResponseHandler() {
+                 @Override
+                 public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                     if(statusCode == 200) {
+                         Toast.makeText(MainActivity.this, "Se guardo en servidor externo", Toast.LENGTH_SHORT).show();
+
+                     }}
+
+
+                 @Override
+                 public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                     Toast.makeText(MainActivity.this, "Error al ingresar datos", Toast.LENGTH_SHORT).show();
+                 }
+             });
+          }
 
     @Override
     protected void onResume() {
         super.onResume();
-
         enableForegroundDispatchSystem();
+
     }
 
     @Override
@@ -77,11 +244,52 @@ public class MainActivity extends AppCompatActivity {
         disableForegroundDispatchSystem();
     }
 
+    /*Metodo para transformar uid de tag nfc*/
     static String bin2hex(byte[] data) {
         return String.format("%0" + (data.length * 2) + "X", new BigInteger(1,data));
 
     }
+
+    /*Metodo para gatillar lectura y ecritura nfc*/
     protected void onNewIntent(Intent intent){
+/*Verficicacion de nfc*/
+        if (!nfcAdapter.isEnabled()){
+            // Toast.makeText(this, "esta habilitado", Toast.LENGTH_SHORT).show();
+            // Toast.makeText(this, "no esta habilitado", Toast.LENGTH_SHORT).show();
+            new AlertDialog.Builder(this)
+                    .setTitle("Activa NFC")
+                    .setMessage("El lector no esta encendido")
+                    .setPositiveButton("Activar", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // Log.d("MainActivity", "Sending atomic bombs to Jupiter");
+                            if (android.os.Build.VERSION.SDK_INT >= 16) {
+                                startActivity(new Intent(android.provider.Settings.ACTION_NFC_SETTINGS));
+                            } else {
+                                startActivity(new Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS));
+                            }
+
+                        }
+                    })
+                    .setNegativeButton("Salir", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            //  Log.d("MainActivity", "Aborting mission...");
+                            finish();
+                            System.exit(0);
+
+                        }
+                    })
+                    .show();
+
+        }else{
+            /*Se asigna a variable opcion la seleccion de entrada o salida*/
+        if (toggleButton3.isChecked()){
+            opcion="Entrada";
+        }else if(toggleButton4.isChecked()){
+            opcion="Salida";
+
+        }
         super.onNewIntent(intent);
         Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
         if (intent.hasExtra(NfcAdapter.EXTRA_TAG)){
@@ -89,18 +297,13 @@ public class MainActivity extends AppCompatActivity {
 
             /***ACA GATILLA LECTURA Y ESCRITURA***////
             if (tglReadWrite.isChecked()){
+
                 Parcelable[] parcelables = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
                 if(parcelables != null && parcelables.length > 0)
                 {
 
                     txtTagContent.setText("");
-
                     txtuid.setText(bin2hex(tag.getId()));
-                    /*String numero= txtuid.getText().toString();
-                   int decimal = Integer.parseInt(numero, 16);
-                    String num= Integer.toString(decimal);*/
-                   // et1.setText(bin2hex(tag.getId()));
-
                     readTextFromMessage((NdefMessage) parcelables[0]);
                 }else{
 
@@ -108,28 +311,39 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(this, "Lectura vacía", Toast.LENGTH_SHORT).show();
                 }
 
+            }else if(opcion==""){
+/*Validacion de ninuga seleccion (entrada o salida)*/
+                Toast.makeText(this, "No ha seleccionado ninguna opción!!!!", Toast.LENGTH_SHORT).show();
             }else {
+            /*se setea el mensaje que se escribira en el tag*/
+                SimpleDateFormat sdf = new SimpleDateFormat("ddMMyyyyHHmmss");
+                time = sdf.format(new Date()).trim();
+
+                int numero = getultimo();
+                String opcion = "";
+                String numerod = Integer.toString(numero);
+                if (toggleButton3.isChecked()) {
+                    opcion = "Entrada";
+                } else if (toggleButton4.isChecked()) {
+                    opcion = "Salida";
+
+                }
 
 
-                //String currentTime = Calendar.getInstance().getTime().toString();
-
-                SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
-                time=sdf.format(new Date()).trim();
-              // Toast.makeText(this, time, Toast.LENGTH_SHORT).show();
-                  int numero= getultimo();
-                 String numerod= Integer.toString(numero);
-                //Toast.makeText(this, numerod, Toast.LENGTH_SHORT).show();
-                     /*aca tiene que estar el return */
-                NdefMessage ndefMessage = createNdefMessage( numerod+"|"+txtTagContent.getText()+"|"+time );
+                NdefMessage ndefMessage = createNdefMessage(numerod + "|" + opcion + "|" + time);
+                /*metodo que escribi en el tag*/
                 writeNdefMessage(tag, ndefMessage);
-                //Toast.makeText(this,bin2hex(tag.getId()),Toast.LENGTH_LONG).show();
                 txtuid.setText(bin2hex(tag.getId()));
+                toggleButton3.setEnabled(true);
+                toggleButton3.setChecked(false);
+                toggleButton4.setEnabled(true);
+                toggleButton4.setChecked(false);
+
 
             }
 
-
         }
-        }
+        }}
 
     public int[] bytearray2intarray(byte[] barray)
     {
@@ -161,7 +375,6 @@ public class MainActivity extends AppCompatActivity {
         return sb.toString();
     }
 
-
     public void limpiar(View v){
           //  tglReadWrite.setText("");
             txtTagContent.setText("");
@@ -169,7 +382,7 @@ public class MainActivity extends AppCompatActivity {
             et1.setText("");
             et2.setText("");
             et3.setText("");
-           et4.setText("");
+            et4.setText("");
 
 }
     private void readTextFromMessage(NdefMessage ndefMessage) {
@@ -179,10 +392,17 @@ public class MainActivity extends AppCompatActivity {
 
             NdefRecord ndefRecord = ndefRecords[0];
             String tagContent = getTextFromNdefRecord(ndefRecord);
+            String[] cadena= tagContent.split("\\|");
+            et1.setText(cadena[0]);
+            et2.setText(cadena[1]);
+            et3.setText("300");
+            et4.setText(formateofechaLista(cadena[2]));
 
-            String substr=tagContent.substring(0,tagContent.indexOf("|"));
-            et1.setText(substr);
-           // Toast.makeText(this, substr, Toast.LENGTH_SHORT).show();
+           // String substr=tagContent.substring(0,tagContent.indexOf("|"));
+            //List<String> parts = Arrays.asList(tagContent.split("|"));
+
+
+           //Toast.makeText(this,cadena[0]+cadena[1]+cadena[2], Toast.LENGTH_SHORT).show();
             txtTagContent.setText(tagContent);
 
            // et2.setText(tagContent);
@@ -231,6 +451,18 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public boolean isOnline() {
+        Runtime runtime = Runtime.getRuntime();
+        try {
+            Process ipProcess = runtime.exec("/system/bin/ping -c 1 8.8.8.8");
+            int     exitValue = ipProcess.waitFor();
+            return (exitValue == 0);
+        }
+        catch (IOException e)          { e.printStackTrace(); }
+        catch (InterruptedException e) { e.printStackTrace(); }
+
+        return false;
+    }
 
     private void writeNdefMessage(Tag tag, NdefMessage ndefMessage){
 
@@ -279,24 +511,31 @@ public class MainActivity extends AppCompatActivity {
                         "administracion", null, 1);
                 SQLiteDatabase bd = admin.getWritableDatabase();
 
-                // String cod=String.valueOf(i1+1);
-
                 String numeserie = txtuid.getText().toString();
-
-                /*castear descripcion pare que gua*/
-                String descri =txtTagContent.getText().toString();
-                String pre = String.valueOf(i1);
                 ContentValues registro = new ContentValues();
-                //registro.put("cod", cod);
                 registro.put("nserie",numeserie);
-                registro.put("descripcion", descri);
-                registro.put("precio", pre);
+                registro.put("descripcion", opcion.trim());
+                registro.put("precio", "300");
                 registro.put("fecha_registro", time);
                 bd.insert("articulos", null, registro);
                 bd.close();
 
+                /*Agregar a base de datos externa*/
 
-                Toast.makeText(this, "Escritura exitosa", Toast.LENGTH_SHORT).show();
+
+                if(isOnline()==true){
+
+                    Almacenar();
+
+                }else{
+                    Toast.makeText(this, "No hay red", Toast.LENGTH_SHORT).show();
+
+
+
+                }
+
+
+
 
 
             }
@@ -306,7 +545,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
-
 
     private NdefRecord createTextRecord(String content) {
         try {
@@ -330,7 +568,24 @@ public class MainActivity extends AppCompatActivity {
         return null;
     }
 
+    public String formateofechaLista(String fecha){
 
+        String dia,mes,año,hor,min,seg;
+
+        dia=fecha.substring(0,2);
+        mes=fecha.substring(2,4);
+        año=fecha.substring(4,8);
+        hor=fecha.substring(8,10);
+        min=fecha.substring(10,12);
+        seg=fecha.substring(12,14);
+
+        String fechaf=dia+"/"+mes+"/"+año+" "+hor+":"+min+":"+seg;
+
+
+
+
+        return fechaf;
+    }
     private NdefMessage createNdefMessage(String content) {
 
         NdefRecord ndefRecord = createTextRecord(content);
@@ -341,11 +596,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void tglReadWriteOnClick(View view){
+   public void tglReadWriteOnClick(View view){
         txtTagContent.setText("");
     }
-
-
     public String getTextFromNdefRecord(NdefRecord ndefRecord) {
         String tagContent = null;
         try {
@@ -520,6 +773,15 @@ public class MainActivity extends AppCompatActivity {
 
 
     /**********************NFC**********************/
+
+
+
+
+
+
+
+
+
 
 
 
