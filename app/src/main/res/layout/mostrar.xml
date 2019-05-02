@@ -27,12 +27,4 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <Button
-        android:id="@+id/button11"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#353db1"
-        android:text="Volver"
-        android:theme="@android:style/Theme.Material"
-        android:visibility="gone" />
 </LinearLayout>

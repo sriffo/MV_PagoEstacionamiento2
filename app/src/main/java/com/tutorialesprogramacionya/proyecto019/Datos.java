@@ -1,19 +1,38 @@
 package com.tutorialesprogramacionya.proyecto019;
 
 public class Datos {
-    private int  cod;
+    private int  cod,dispositivo;
+    private String status;
     private String nserie,descripcion,precio,fecha_registro;
 
 
-    public Datos() {
+   public Datos() {
         }
 
-    public Datos(int cod, String nserie, String descripcion, String precio, String fecha_registro) {
-        this.cod = cod;
+    public Datos(int dispositivo,int cod, String nserie, String descripcion, String precio, String fecha_registro, String status) {
+       this.dispositivo = dispositivo;
+       this.cod = cod;
         this.nserie = nserie;
         this.descripcion = descripcion;
         this.precio = precio;
         this.fecha_registro = fecha_registro;
+        this.status = status;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public int getDispositivo() {
+        return dispositivo;
+    }
+
+    public void setDispositivo(int dispositivo) {
+        this.dispositivo = dispositivo;
     }
 
     public int getCod() {

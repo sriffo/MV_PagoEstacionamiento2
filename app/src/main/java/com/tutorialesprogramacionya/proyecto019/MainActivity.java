@@ -1,11 +1,17 @@
 package com.tutorialesprogramacionya.proyecto019;
 
+import android.app.DownloadManager;
+import android.content.AsyncTaskLoader;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
@@ -13,6 +19,7 @@ import android.nfc.NfcManager;
 import android.nfc.Tag;
 import android.nfc.tech.Ndef;
 import android.nfc.tech.NdefFormatable;
+import android.os.AsyncTask;
 import android.os.Parcelable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -26,17 +33,34 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 import android.app.PendingIntent;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.Volley;
+
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
 import com.loopj.android.http.*;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.sql.Time;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
 
 import cz.msebera.android.httpclient.Header;
@@ -52,12 +76,17 @@ public class MainActivity extends AppCompatActivity  {
     Button button6;
     Button button9;
     Button button7;
+    Button button8;
     private String time;
     private int  numero;
     private ListView lvlList;
     private AsyncHttpClient cliente;
     private String pre;
     private String opcion="";
+    ArrayList<Datos> arrayList = new ArrayList<>();
+    BroadcastReceiver broadcastReceiver;
+//    private ConnectivityManager red =
+
 
 
     @Override
@@ -66,58 +95,69 @@ public class MainActivity extends AppCompatActivity  {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         nfcAdapter = NfcAdapter.getDefaultAdapter(this);
-        tglReadWrite = (ToggleButton)findViewById(R.id.tglReadWrite);
-        toggleButton3= (ToggleButton)findViewById(R.id.toggleButton3);
-        toggleButton4= (ToggleButton)findViewById(R.id.toggleButton4);
-        txtTagContent = (EditText)findViewById(R.id.txtTagContent);
-        txtuid= (TextView)findViewById(R.id.txtuid);
-        et1=(EditText)findViewById(R.id.et1);
-        et2=(EditText)findViewById(R.id.et2);
-        et3=(EditText)findViewById(R.id.et3);
-        button6= (Button)findViewById(R.id.button6);
-        button9= (Button)findViewById(R.id.button9);
-        et4=(EditText)findViewById(R.id.et4);
-        button7= (Button)findViewById(R.id.button7);
+        tglReadWrite = (ToggleButton) findViewById(R.id.tglReadWrite);
+        toggleButton3 = (ToggleButton) findViewById(R.id.toggleButton3);
+        toggleButton4 = (ToggleButton) findViewById(R.id.toggleButton4);
+        txtTagContent = (EditText) findViewById(R.id.txtTagContent);
+        txtuid = (TextView) findViewById(R.id.txtuid);
+        et1 = (EditText) findViewById(R.id.et1);
+        et2 = (EditText) findViewById(R.id.et2);
+        et3 = (EditText) findViewById(R.id.et3);
+        button6 = (Button) findViewById(R.id.button6);
+        button9 = (Button) findViewById(R.id.button9);
+        button8 = (Button) findViewById(R.id.button8);
+        et4 = (EditText) findViewById(R.id.et4);
+        button7 = (Button) findViewById(R.id.button7);
         cliente = new AsyncHttpClient();
+        broadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+
+            }
+        };
+
+
+      //   new Sincronizacion().execute();
         /*precio definido hasta implementar metodo de cobro*/
-         pre ="300";
-        lvlList = (ListView)findViewById(R.id.lvlList);
+        pre = "300";
+        lvlList = (ListView) findViewById(R.id.lvlList);
         /*Se desactivan campos de textos*/
         txtTagContent.setEnabled(false);
         et1.setEnabled(false);
         et2.setEnabled(false);
         et3.setEnabled(false);
         et4.setEnabled(false);
+        button7.setEnabled(false);
         /*Este if verifica si esta habilitado el NFC*/
-       if (!nfcAdapter.isEnabled()){
-           /*Si esta deshabilitado se envia una alerta*/
-           new AlertDialog.Builder(this)
-                   .setTitle("Activa NFC")
-                   .setMessage("El lector no esta encendido")
-                   .setPositiveButton("Activar", new DialogInterface.OnClickListener() {
-                       @Override
-                       public void onClick(DialogInterface dialog, int which) {
-                    /*Se verifica version de android para desplegar menu de ajustes*/
-                           if (android.os.Build.VERSION.SDK_INT >= 16) {
-                               /*Menu actual*/
-                               startActivity(new Intent(android.provider.Settings.ACTION_NFC_SETTINGS));
-                           } else {
-                               /*Menu antiguo*/
-                               startActivity(new Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS));
-                           }
+        if (!nfcAdapter.isEnabled()) {
+            /*Si esta deshabilitado se envia una alerta*/
+            new AlertDialog.Builder(this)
+                    .setTitle("Activa NFC")
+                    .setMessage("El lector no esta encendido")
+                    .setPositiveButton("Activar", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            /*Se verifica version de android para desplegar menu de ajustes*/
+                            if (android.os.Build.VERSION.SDK_INT >= 16) {
+                                /*Menu actual*/
+                                startActivity(new Intent(android.provider.Settings.ACTION_NFC_SETTINGS));
+                            } else {
+                                /*Menu antiguo*/
+                                startActivity(new Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS));
+                            }
 
-                       }
-                   })   /*Se da la opcion de salir  no querer activar nfc */
-                   .setNegativeButton("Salir", new DialogInterface.OnClickListener() {
-                       @Override
-                       public void onClick(DialogInterface dialog, int which) {
+                        }
+                    })   /*Se da la opcion de salir  no querer activar nfc */
+                    .setNegativeButton("Salir", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
 
-                           finish();
-                           System.exit(0);
+                            finish();
+                            System.exit(0);
 
-                       }
-                   })
-                   .show();
+                        }
+                    })
+                    .show();
 
         }
 
@@ -126,7 +166,8 @@ public class MainActivity extends AppCompatActivity  {
             @Override
             public void onClick(View view) {
                 /*si esta en leer se desactivan los botones*/
-                if (tglReadWrite.isChecked()){
+                if (tglReadWrite.isChecked()) {
+                    button7.setEnabled(true);
                     txtTagContent.setText("");
                     txtuid.setText("");
                     et1.setText("");
@@ -135,8 +176,9 @@ public class MainActivity extends AppCompatActivity  {
                     et4.setText("");
                     toggleButton3.setEnabled(false);
                     toggleButton4.setEnabled(false);
-                }else{
+                } else {
                     /*si esta enescribir se activan los botones*/
+                    button7.setEnabled(false);
                     txtuid.setText("");
                     et1.setText("");
                     et2.setText("");
@@ -148,53 +190,119 @@ public class MainActivity extends AppCompatActivity  {
             }
         });
 
-             /*Listeners para bloquear botones si otro se aprieta (entrada y salida) */
+        /*Listeners para bloquear botones si otro se aprieta (entrada y salida) */
         toggleButton3.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (toggleButton3.isChecked()){
+                if (toggleButton3.isChecked()) {
                     toggleButton4.setEnabled(false);
-                }else{
+                } else {
                     toggleButton4.setEnabled(true);
 
-                }}
+                }
+            }
         });
+        button8.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent i = new Intent(MainActivity.this, RecyclerListado.class);
+                i.putExtra("dispositivo", getIntent().getIntExtra("dispinicio",0));
 
+                startActivity(i);
+
+
+
+                //sync();
+            }
+        });
         toggleButton4.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (toggleButton4.isChecked()){
-                toggleButton3.setEnabled(false);
-            }else{
+                if (toggleButton4.isChecked()) {
+                    toggleButton3.setEnabled(false);
+                } else {
                     toggleButton3.setEnabled(true);
 
-                }}
+                }
+            }
         });
 
 
 
         /*Validacion de que no hay leido una tarjeta*/
-            button7.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
+        button7.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
 
-                    if (txtuid.getText().toString().isEmpty()){
-                        Toast.makeText(MainActivity.this, "No ha leido ninguna Tarjeta!!!!!", Toast.LENGTH_SHORT).show();
-                }else{
-                      /*Activa activity mostrar datos*/
-                        Intent i= new Intent(MainActivity.this,Mostrar.class);
+                if (txtuid.getText().toString().isEmpty()) {
+                    Toast.makeText(MainActivity.this, "No ha leido ninguna Tarjeta!!!!!", Toast.LENGTH_SHORT).show();
+                } else {
+                    if(isOnline()==true){
+                        Intent i = new Intent(MainActivity.this, RecyclerMovimientoOnline.class);
                         i.putExtra("nserie", txtuid.getText().toString());
                         startActivity(i);
 
+                    }else {
+                        new AlertDialog.Builder(MainActivity.this)
+                                .setTitle("No hay red")
+                                .setMessage("Datos pueden estar incompletos")
+                                .setPositiveButton("Mostrar", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        // Log.d("MainActivity", "Sending atomic bombs to Jupiter");
+                                        /*Activa activity mostrar datos*/
+                                        Intent i = new Intent(MainActivity.this, RecyclerMovimiento.class);
+                                        i.putExtra("nserie", txtuid.getText().toString());
+                                        startActivity(i);
+
+
+                                    }
+                                })
+                                .setNegativeButton("Volver", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        //  Log.d("MainActivity", "Aborting mission...");
+                                     /*   Intent i = new Intent(RecyclerMovimiento.this, MainActivity.class);
+                                        startActivity(i);
+                                        finish();*/
+                                    }
+                                })
+                                .show();
                     }
+
+
                 }
+            }
         });
 
+
+    } //inicializacion de modulos y variables
+
+    public boolean checkred(){
+        ConnectivityManager connectivityManager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        return (networkInfo!= null && networkInfo.isConnected());
+
+    }//modulo para ver el estado de red
+    public boolean isOnline() {
+        Runtime runtime = Runtime.getRuntime();
+        try {
+            Process ipProcess = runtime.exec("/system/bin/ping -c 1 8.8.8.8");
+            int     exitValue = ipProcess.waitFor();
+            return (exitValue == 0);
+        }
+        catch (IOException e)          { e.printStackTrace(); }
+        catch (InterruptedException e) { e.printStackTrace(); }
+
+        return false;
     }
 /*Modulos para obtener datos e insertar en BD externa*/
     private void Almacenar(){
           int num =getultimo();
           Datos d = new Datos();
+          //int num;
+        int numero= getIntent().getIntExtra("dispinicio",0);
+          d.setDispositivo(numero);
           d.setCod(num);
           d.setNserie(txtuid.getText().toString());
           d.setDescripcion(opcion.trim());
@@ -204,36 +312,41 @@ public class MainActivity extends AppCompatActivity  {
 
 
           }
-
-
           private void insertar(Datos d){
-              /*Toast.makeText(this, "esta en insertar", Toast.LENGTH_SHORT).show();
-              Toast.makeText(this, "datos"+d.getCod()+d.getNserie()+d.getDescripcion()
-                      +d.getFecha_registro()+d.getPrecio(), Toast.LENGTH_SHORT).show();*/
+              Log.d("check","esta en insertar");
              String url = "https://appnfc.000webhostapp.com/agregar.php?";
-             String parametros = "cod="+d.getCod()+"&nserie="+d.getNserie()+"&descripcion="+d.getDescripcion()+"&precio="+d.getPrecio()+"&fecha_registro="+d.getFecha_registro();
+              Log.d("check","Datos:" +d.getDispositivo() +d.getCod()+d.getNserie()+d.getDescripcion()+d.getPrecio()+d.getFecha_registro());
+             final String parametros = "cod="+d.getCod()+"&nserie="+d.getNserie()+"&descripcion="+d.getDescripcion()+"&precio="+d.getPrecio()+"&fecha_registro="+d.getFecha_registro()+"&dispositivo="+d.getDispositivo();
              // Toast.makeText(this, parametros, Toast.LENGTH_SHORT).show();
-
+              Log.d("parametros",parametros.toString());
+              final String nseries = d.getNserie();
+              final String descripcions = d.getDescripcion();
+              final String precios = d.getPrecio();
+              final String Fecha = d.getFecha_registro();
+              final int disp = d.getDispositivo();
              cliente.post(url+parametros, new AsyncHttpResponseHandler() {
                  @Override
                  public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                      if(statusCode == 200) {
                          Toast.makeText(MainActivity.this, "Se guardo en servidor externo", Toast.LENGTH_SHORT).show();
+                         guardaralocal(nseries,descripcions,precios,Fecha,"Enviado",disp);
 
                      }}
 
 
                  @Override
                  public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-                     Toast.makeText(MainActivity.this, "Error al ingresar datos", Toast.LENGTH_SHORT).show();
+                     Toast.makeText(MainActivity.this, "No hay conexion con servidor externo", Toast.LENGTH_SHORT).show();
+                     guardaralocal(nseries,descripcions,precios,Fecha,"Pendiente",disp);
                  }
              });
           }
-
+/*modulos obligatorios (constructores)*/
     @Override
     protected void onResume() {
         super.onResume();
         enableForegroundDispatchSystem();
+        registerReceiver(networkStateReceiver, new IntentFilter(android.net.ConnectivityManager.CONNECTIVITY_ACTION));
 
     }
 
@@ -242,6 +355,7 @@ public class MainActivity extends AppCompatActivity  {
         super.onPause();
 
         disableForegroundDispatchSystem();
+        unregisterReceiver(networkStateReceiver);
     }
 
     /*Metodo para transformar uid de tag nfc*/
@@ -250,7 +364,7 @@ public class MainActivity extends AppCompatActivity  {
 
     }
 
-    /*Metodo para gatillar lectura y ecritura nfc*/
+    /*Modulo principal nfc (lectura y escritura)*/
     protected void onNewIntent(Intent intent){
 /*Verficicacion de nfc*/
         if (!nfcAdapter.isEnabled()){
@@ -315,6 +429,8 @@ public class MainActivity extends AppCompatActivity  {
 /*Validacion de ninuga seleccion (entrada o salida)*/
                 Toast.makeText(this, "No ha seleccionado ninguna opción!!!!", Toast.LENGTH_SHORT).show();
             }else {
+
+                button7.setEnabled(false);
             /*se setea el mensaje que se escribira en el tag*/
                 SimpleDateFormat sdf = new SimpleDateFormat("ddMMyyyyHHmmss");
                 time = sdf.format(new Date()).trim();
@@ -328,11 +444,12 @@ public class MainActivity extends AppCompatActivity  {
                     opcion = "Salida";
 
                 }
-
+                Log.d("MainActivity", "numero:"+numerod);
 
                 NdefMessage ndefMessage = createNdefMessage(numerod + "|" + opcion + "|" + time);
                 /*metodo que escribi en el tag*/
                 writeNdefMessage(tag, ndefMessage);
+
                 txtuid.setText(bin2hex(tag.getId()));
                 toggleButton3.setEnabled(true);
                 toggleButton3.setChecked(false);
@@ -340,41 +457,13 @@ public class MainActivity extends AppCompatActivity  {
                 toggleButton4.setChecked(false);
 
 
+
             }
 
         }
         }}
 
-    public int[] bytearray2intarray(byte[] barray)
-    {
-        int[] iarray = new int[barray.length];
-        int i = 0;
-        for (byte b : barray)
-            iarray[i++] = b & 0xff;
-        return iarray;
-    }
-    public static int[] convertToIntArray(byte[] input)
-    {
-        int[] ret = new int[input.length];
-        for (int i = 0; i < input.length; i++)
-        {
-            ret[i] = input[i] & 0xff; // Range 0 to 255, not -128 to 127
-        }
-        return ret;
-    }
-
-    private final String CHARS = "0123456789ABCDEF";
-
-    private String toHexString(byte[] data) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < data.length; ++i) {
-            sb.append(CHARS.charAt((data[i] >> 4) & 0x0F)).append(
-                    CHARS.charAt(data[i] & 0x0F));
-         int  x= Integer.parseInt(sb.toString(),16);
-        }
-        return sb.toString();
-    }
-
+        private final String CHARS = "0123456789ABCDEF"; //utilitario para formatear tag
     public void limpiar(View v){
           //  tglReadWrite.setText("");
             txtTagContent.setText("");
@@ -384,7 +473,7 @@ public class MainActivity extends AppCompatActivity  {
             et3.setText("");
             et4.setText("");
 
-}
+}//limpia pantalla
     private void readTextFromMessage(NdefMessage ndefMessage) {
 
         NdefRecord[] ndefRecords = ndefMessage.getRecords();
@@ -411,9 +500,8 @@ public class MainActivity extends AppCompatActivity  {
         {
             Toast.makeText(this, "Lectura vacía", Toast.LENGTH_SHORT).show();
         }
-        }
-
-    private void enableForegroundDispatchSystem() {
+        }//metodo de lectura nfc
+        private void enableForegroundDispatchSystem() {
 
         Intent intent = new Intent(this, MainActivity.class).addFlags(Intent.FLAG_RECEIVER_REPLACE_PENDING);
 
@@ -422,12 +510,10 @@ public class MainActivity extends AppCompatActivity  {
         IntentFilter[] intentFilters = new IntentFilter[]{};
 
         nfcAdapter.enableForegroundDispatch(this, pendingIntent, intentFilters, null);
-    }
-
+    }//metodo intent nfc
     private void disableForegroundDispatchSystem() {
         nfcAdapter.disableForegroundDispatch(this);
-    }
-
+    } //utilitario nfc
     private void formatTag(Tag tag, NdefMessage ndefMessage) {
         try {
 
@@ -449,21 +535,7 @@ public class MainActivity extends AppCompatActivity  {
             Log.e("formatTag", e.getMessage());
         }
 
-    }
-
-    public boolean isOnline() {
-        Runtime runtime = Runtime.getRuntime();
-        try {
-            Process ipProcess = runtime.exec("/system/bin/ping -c 1 8.8.8.8");
-            int     exitValue = ipProcess.waitFor();
-            return (exitValue == 0);
-        }
-        catch (IOException e)          { e.printStackTrace(); }
-        catch (InterruptedException e) { e.printStackTrace(); }
-
-        return false;
-    }
-
+    }//metodo para formatear mensaje nfc
     private void writeNdefMessage(Tag tag, NdefMessage ndefMessage){
 
         try {
@@ -507,34 +579,10 @@ public class MainActivity extends AppCompatActivity  {
                 Random r = new Random();
                 int i1 = (r.nextInt(80) + 65);
 
-                AdminSQLiteOpenHelper admin = new AdminSQLiteOpenHelper(this,
-                        "administracion", null, 1);
-                SQLiteDatabase bd = admin.getWritableDatabase();
+              String numeserie = txtuid.getText().toString();
 
-                String numeserie = txtuid.getText().toString();
-                ContentValues registro = new ContentValues();
-                registro.put("nserie",numeserie);
-                registro.put("descripcion", opcion.trim());
-                registro.put("precio", "300");
-                registro.put("fecha_registro", time);
-                bd.insert("articulos", null, registro);
-                bd.close();
-
-                /*Agregar a base de datos externa*/
-
-
-                if(isOnline()==true){
-
-                    Almacenar();
-
-                }else{
-                    Toast.makeText(this, "No hay red", Toast.LENGTH_SHORT).show();
-
-
-
-                }
-
-
+                Almacenar();
+               // guardararemoto(numeserie,opcion.trim(),"300",time,1);
 
 
 
@@ -544,8 +592,7 @@ public class MainActivity extends AppCompatActivity  {
             Log.e("writeNdefMessage", e.getMessage());
         }
 
-    }
-
+    }//metodo de escritura nfc
     private NdefRecord createTextRecord(String content) {
         try {
             byte[] language;
@@ -566,8 +613,7 @@ public class MainActivity extends AppCompatActivity  {
             Log.e("createTextRecord", e.getMessage());
         }
         return null;
-    }
-
+    }//metodo para crear mensaje (escritura)
     public String formateofechaLista(String fecha){
 
         String dia,mes,año,hor,min,seg;
@@ -585,7 +631,7 @@ public class MainActivity extends AppCompatActivity  {
 
 
         return fechaf;
-    }
+    }//ya no se ocupa
     private NdefMessage createNdefMessage(String content) {
 
         NdefRecord ndefRecord = createTextRecord(content);
@@ -593,12 +639,7 @@ public class MainActivity extends AppCompatActivity  {
         NdefMessage ndefMessage = new NdefMessage(new NdefRecord[]{ndefRecord});
 
         return ndefMessage;
-    }
-
-
-   public void tglReadWriteOnClick(View view){
-        txtTagContent.setText("");
-    }
+    }//metodo para crear mensaje(lectura)
     public String getTextFromNdefRecord(NdefRecord ndefRecord) {
         String tagContent = null;
         try {
@@ -611,53 +652,7 @@ public class MainActivity extends AppCompatActivity  {
             Log.e("getTextFromNdefRecord", e.getMessage(), e);
         }
         return tagContent;
-    }
-    /***************************************************/
-    /**************BASE DE DATOS************************/
-    /***************************************************/
-    public void altas(View v) {
-        AdminSQLiteOpenHelper admin = new AdminSQLiteOpenHelper(this,
-                "administracion", null, 1);
-        SQLiteDatabase bd = admin.getWritableDatabase();
-        String cod = et1.getText().toString();
-        String descri = et2.getText().toString();
-        String pre = et3.getText().toString();
-        ContentValues registro = new ContentValues();
-        registro.put("codigo", cod);
-        registro.put("descripcion", descri);
-        registro.put("precio", pre);
-        bd.insert("articulos", null, registro);
-        bd.close();
-        et1.setText("");
-        et2.setText("");
-        et3.setText("");
-        Toast.makeText(this, "Se cargaron los datos del artículo",
-                Toast.LENGTH_SHORT).show();
-    }
-   public void alta(View v) {
-
-       Random r = new Random();
-       int i1 = (r.nextInt(80) + 65);
-        AdminSQLiteOpenHelper admin = new AdminSQLiteOpenHelper(this,
-                "administracion", null, 1);
-        SQLiteDatabase bd = admin.getWritableDatabase();
-        String cod = txtuid.getText().toString();
-        String descri = txtTagContent.getText().toString();
-        String pre = et3.getText().toString();
-        ContentValues registro = new ContentValues();
-        registro.put("codigo", cod);
-        registro.put("descripcion", descri);
-        registro.put("precio", pre);
-        bd.insert("articulos", null, registro);
-        bd.close();
-        et1.setText("");
-        et2.setText("");
-        et3.setText("");
-        Toast.makeText(this, "Se cargaron los datos del artículo",
-                Toast.LENGTH_SHORT).show();
-    }
-
-
+    }//obtener mensaje de tag
     public int getultimo() {
         int numeroultimo=0;
         AdminSQLiteOpenHelper admin = new AdminSQLiteOpenHelper(this,
@@ -668,7 +663,7 @@ public class MainActivity extends AppCompatActivity  {
         if (fila.moveToLast()) {
 
             numeroultimo=fila.getInt(0);
-
+            Log.d("MainActivity", "numero:"+numeroultimo);
         } else
          //   Toast.makeText(this, "Erorr",
            //         Toast.LENGTH_SHORT).show();
@@ -685,61 +680,7 @@ public class MainActivity extends AppCompatActivity  {
 
 
 
-    }
-
-    public void consultaporcodigo(View v) {
-        AdminSQLiteOpenHelper admin = new AdminSQLiteOpenHelper(this,
-                "administracion", null, 1);
-        SQLiteDatabase bd = admin.getWritableDatabase();
-        String cod = et1.getText().toString();
-        Cursor fila = bd.rawQuery(
-                "select descripcion, precio, fecha_registro from articulos where TRIM(cod)= '"+cod.trim()+"'", null);
-        if (fila.moveToFirst()) {
-           /* Toast.makeText(this, fila.getString(0),
-                    Toast.LENGTH_SHORT).show();*/
-            et2.setText(fila.getString(0));
-            et3.setText(fila.getString(1));
-            et4.setText(fila.getString(2));
-        } else
-            Toast.makeText(this, "No existe registro con dicho código",
-                    Toast.LENGTH_SHORT).show();
-        bd.close();
-    }
-
-    public void consultapordescripcion(View v) {
-        AdminSQLiteOpenHelper admin = new AdminSQLiteOpenHelper(this,
-                "administracion", null, 1);
-        SQLiteDatabase bd = admin.getWritableDatabase();
-        String descri = et2.getText().toString();
-        Cursor fila = bd.rawQuery(
-                "select codigo,precio,fecha_registro from articulos where descripcion='" + descri +"'", null);
-        if (fila.moveToFirst()) {
-            et1.setText(fila.getString(0));
-            et3.setText(fila.getString(1));
-        } else
-            Toast.makeText(this, "No existe un artículo con dicha descripción",
-                    Toast.LENGTH_SHORT).show();
-        bd.close();
-    }
-
-    public void bajaporcodigo(View v) {
-        AdminSQLiteOpenHelper admin = new AdminSQLiteOpenHelper(this,
-                "administracion", null, 1);
-        SQLiteDatabase bd = admin.getWritableDatabase();
-        String cod= et1.getText().toString();
-        int cant = bd.delete("articulos", "TRIM(cod)='" +cod.trim()+"'", null);
-        bd.close();
-        et1.setText("");
-        et2.setText("");
-        et3.setText("");
-        if (cant == 1)
-            Toast.makeText(this, "Se borró el registro con dicho código",
-                    Toast.LENGTH_SHORT).show();
-        else
-            Toast.makeText(this, "No existe un registro con dicho código",
-                    Toast.LENGTH_SHORT).show();
-    }
-
+    }//obetenr ultimo registro sqlite
     public void borrar(View v){
         AdminSQLiteOpenHelper admin = new AdminSQLiteOpenHelper(this,
                 "administracion", null, 1);
@@ -748,57 +689,159 @@ public class MainActivity extends AppCompatActivity  {
         numero=0;
 
 
-    }
-
-    public void modificacion(View v) {
+    }//no se ocupa
+    public void modificacion(int cod,int disp) {
         AdminSQLiteOpenHelper admin = new AdminSQLiteOpenHelper(this,
                 "administracion", null, 1);
         SQLiteDatabase bd = admin.getWritableDatabase();
-        String cod = et1.getText().toString();
-        String descri = et2.getText().toString();
-        String pre = et3.getText().toString();
         ContentValues registro = new ContentValues();
-        registro.put("codigo", cod);
-        registro.put("descripcion", descri);
-        registro.put("precio", pre);
-        int cant = bd.update("articulos", registro, "codigo=" + cod, null);
+
+        registro.put("status","Enviado");
+        //registro.put("codigo", cod);
+
+        int cant = bd.update("articulos", registro, "cod=" + cod , null);
         bd.close();
-        if (cant == 1)
-            Toast.makeText(this, "se modificaron los datos", Toast.LENGTH_SHORT)
-                    .show();
-        else
-            Toast.makeText(this, "no existe un artículo con el código ingresado",
-                    Toast.LENGTH_SHORT).show();
+    }//actualizar status al sync
+    public void sync() {
+    //arrayList.clear();
+
+Log.d("check", "sync" );
+    AdminSQLiteOpenHelper admin = new AdminSQLiteOpenHelper(this,
+            "administracion", null, 1);
+    SQLiteDatabase bd = admin.getWritableDatabase();
+    Cursor fila = bd.rawQuery("select * from articulos where status = 'Pendiente'", null);
+    while (fila.moveToNext()) {
+        String url = "https://appnfc.000webhostapp.com/agregar.php?";
+         if(fila.getCount()>0){
+       // Log.d("SYNC","");
+       String parametros = "cod=" +fila.getInt(fila.getColumnIndex("cod")) + "&nserie=" + fila.getString(fila.getColumnIndex("nserie")) + "&descripcion=" + fila.getString(fila.getColumnIndex("descripcion")) + "&precio=" + fila.getString(fila.getColumnIndex("precio")) + "&fecha_registro=" + fila.getString(fila.getColumnIndex("fecha_registro"))
+               + "&dispositivo=" + fila.getString(fila.getColumnIndex("dispositivo"));
+                final int numero= fila.getInt(fila.getColumnIndex("cod"));
+                final int disp= fila.getInt(fila.getColumnIndex("dispositivo"));
+
+     cliente.post(url + parametros, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                if (statusCode == 200) {
+                    Toast.makeText(MainActivity.this, "Datos sincronizados", Toast.LENGTH_SHORT).show();
+                modificacion(numero,disp);
+
+
+                }
+            }
+
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                Toast.makeText(MainActivity.this, "No hay conexion con servidor externo", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+    }else{
+
+             Toast.makeText(MainActivity.this, "Datos ya sincronizados", Toast.LENGTH_SHORT).show();
+         }
+
+
+
     }
 
 
-    /**********************NFC**********************/
+}//sincronizacion
+    private void guardararemoto(final String nseries, final String descripcions, final String precios, final String Fecha, final int disp){
+    String url = "https://appnfc.000webhostapp.com/agregar2.php";
+    Log.d("check","esta guardaremoto");
+   // guardaralocal(nseries,descripcions,precios,Fecha,DbContract.SYNC_STATUS_FAILED);
+if(checkred()){
+
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                try {
+                    JSONObject jsonObject = new JSONObject(response);
+                    String Response = jsonObject.getString("response");
+                    if (response.equals("OK")){
+                        guardaralocal(nseries,descripcions,precios,Fecha,"Enviado",disp);
+
+                    }else{
+                       Log.d("check","esta en el else");
+                        guardaralocal(nseries,descripcions,precios,Fecha,"Pendiente",disp);
+
+                    }
+
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                guardaralocal(nseries,descripcions,precios,Fecha,"Pendiente",disp);
+
+            }
+        })
+        {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String,String> params = new HashMap<>();
+                params.put("nserie",nseries);
+                params.put("descripcion",descripcions);
+                params.put("precio",precios);
+                params.put("fecha_registro",Fecha);
+
+                return super.getParams();
+            }
+        }
+        ;
+       Singleton.getInstance(MainActivity.this).addToRequestQue(stringRequest);
+
+    }else{
+
+       guardaralocal(nseries,descripcions,precios,Fecha,"Pendiente",disp);
+    }
+
+
+}//innsert remoto
+    private void guardaralocal(String nseries, String descripcions, String precios, String Fecha,String sync, int disp){
+    Log.d("check","esta guardalocal");
+  //  AdminSQLiteOpenHelper adminSQLiteOpenHelper = new AdminSQLiteOpenHelper(this);
+    AdminSQLiteOpenHelper admin = new AdminSQLiteOpenHelper(this,
+            "administracion", null, 1);
+    SQLiteDatabase bd = admin.getWritableDatabase();
+    SQLiteDatabase database = admin.getWritableDatabase();
+    admin.guardainterna(nseries,descripcions,precios,Fecha,sync,disp,database);
+  //  leerdesdelocal();
+    admin.close();
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+}//insert local
+    private BroadcastReceiver networkStateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            ConnectivityManager manager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);  /*gatilla sync si esta */
+            NetworkInfo ni = manager.getActiveNetworkInfo();
+            onNetworkChange(ni);
+        }
+    };
+    private void onNetworkChange(NetworkInfo networkInfo) {
+        if (networkInfo != null) {
+            if (networkInfo.getState() == NetworkInfo.State.CONNECTED) {
+                sync();
+                Log.d("MenuActivity", "CONNECTED");
+            } else {
+                Log.d("MenuActivity", "DISCONNECTED");
+            }
+        }        }
+        @Override
+        protected void onStart() {
+        super.onStart();
+        registerReceiver(networkStateReceiver, new IntentFilter(android.net.ConnectivityManager.CONNECTIVITY_ACTION));
+    }
 }
 
 
