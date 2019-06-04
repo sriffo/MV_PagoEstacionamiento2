@@ -1,26 +1,23 @@
 package com.tutorialesprogramacionya.proyecto019;
 
-import android.annotation.SuppressLint;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.ViewGroup;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-
 import java.util.ArrayList;
 
-public class ListadoAdapter extends RecyclerView.Adapter<ListadoAdapter.DatosViewHolder> {
+public class MovimientoAdapter extends RecyclerView.Adapter<MovimientoAdapter.DatosViewHolder> {
     private ArrayList<Datos> arrayList = new ArrayList<>();
 
-    public ListadoAdapter(ArrayList<Datos> arrayList){
+    public MovimientoAdapter(ArrayList<Datos> arrayList){
         this.arrayList= arrayList;
     }
     @Override
     public DatosViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-     View view =LayoutInflater.from(parent.getContext()).inflate(R.layout.item_view,parent,false);
+     View view =LayoutInflater.from(parent.getContext()).inflate(R.layout.item_view_mov,parent,false);
         return new DatosViewHolder(view);
     }
 
@@ -40,10 +37,6 @@ public class ListadoAdapter extends RecyclerView.Adapter<ListadoAdapter.DatosVie
         }
         String disp=String.valueOf(arrayList.get(position).getDispositivo());
         holder.dispositivo.setText(disp);
-        String est=String.valueOf(arrayList.get(position).getEstacion());
-        holder.estacion.setText(est);
-
-
 
 
 
@@ -54,7 +47,7 @@ public class ListadoAdapter extends RecyclerView.Adapter<ListadoAdapter.DatosVie
         return arrayList.size();
     }
     public class DatosViewHolder extends RecyclerView.ViewHolder{
-        TextView operacion,tarifa,fecha,estado,dispositivo,nserie,estacion;
+        TextView operacion,tarifa,fecha,estado,dispositivo,nserie;
         ImageView status;
         public DatosViewHolder(View itemView){
             super(itemView);
@@ -65,14 +58,13 @@ public class ListadoAdapter extends RecyclerView.Adapter<ListadoAdapter.DatosVie
             estado= (TextView)itemView.findViewById(R.id.textStatus);
             dispositivo = (TextView)itemView.findViewById(R.id.textdisp);
              status=(ImageView)itemView.findViewById(R.id.imagen);
-             estacion=(TextView)itemView.findViewById(R.id.textest);
         }
 
 
 
     }
     public String formateofechaLista(String fecha){
-        Log.d("fecha",fecha);
+
         String dia,mes,año,hor,min,seg;
 
         dia=fecha.substring(0,2);
@@ -84,7 +76,6 @@ public class ListadoAdapter extends RecyclerView.Adapter<ListadoAdapter.DatosVie
 
         String fechaf=dia+"/"+mes+"/"+año+" "+hor+":"+min+":"+seg;
 
-        Log.d("fecha",fechaf);
 
 
 

@@ -40,7 +40,7 @@
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:layout_gravity="center"
-        android:layout_marginTop="91dp"
+        android:layout_marginTop="77dp"
         android:ems="10"
         android:hint="numero registro"
         android:inputType="text" />
@@ -78,66 +78,16 @@
         android:hint="fecha"
         android:inputType="numberDecimal" />
 
-    <Button
-        android:id="@+id/button"
-        android:layout_width="match_parent"
+    <EditText
+        android:id="@+id/et5"
+        android:layout_width="214dp"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/et3"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentLeft="true"
-        android:background="#353db1"
-        android:onClick="alta"
-        android:text="Alta"
-        android:visibility="gone" />
-
-    <Button
-        android:id="@+id/button3"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/button2"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentLeft="true"
-        android:layout_marginTop="0dp"
-        android:background="#353db1"
-        android:onClick="consultapordescripcion"
-        android:text="Consulta por descripcion"
-        android:visibility="gone" />
-
-    <Button
-        android:id="@+id/button11"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/button2"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentLeft="true"
-        android:layout_marginTop="0dp"
-        android:background="#353db1"
-        android:onClick="sync"
-        android:visibility="gone" />
-
-    <Button
-        android:id="@+id/button4"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/button2"
-        android:layout_alignStart="@+id/button7"
-        android:layout_marginTop="-34dp"
-        android:background="#353db1"
-        android:onClick="bajaporcodigo"
-        android:text="eliminar registro"
-        android:visibility="invisible" />
-
-    <Button
-        android:id="@+id/button5"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/button4"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentLeft="true"
-        android:background="#353db1"
-        android:onClick="modificacion"
-        android:text="Modificacion"
-        android:visibility="gone" />
+        android:layout_below="@+id/et2"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="93dp"
+        android:ems="10"
+        android:hint="estacion"
+        android:inputType="numberDecimal" />
 
     <ToggleButton
         android:id="@+id/tglReadWrite"
@@ -148,7 +98,7 @@
         android:layout_alignParentTop="false"
         android:layout_alignParentRight="true"
         android:layout_centerVertical="false"
-        android:layout_marginRight="260dp"
+        android:layout_marginRight="268dp"
         android:background="#353db1"
         android:text="ToggleButton"
         android:textOff="Escribir"
@@ -163,20 +113,21 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginEnd="42dp"
-        android:layout_marginRight="42dp"
-        android:layout_marginBottom="155dp"
+        android:layout_marginEnd="44dp"
+        android:layout_marginRight="44dp"
+        android:layout_marginBottom="138dp"
         android:ems="10"
         android:inputType="none|textPersonName" />
 
     <TextView
         android:id="@+id/txtuid"
         android:layout_width="209dp"
-        android:layout_height="36dp"
+        android:layout_height="wrap_content"
         android:layout_alignStart="@+id/txtTagContent"
         android:layout_alignParentBottom="true"
-        android:layout_marginStart="1dp"
-        android:layout_marginBottom="115dp" />
+        android:layout_marginStart="-25dp"
+        android:layout_marginBottom="104dp"
+        tools:visibility="invisible" />
 
     <Button
         android:id="@+id/button6"
@@ -214,7 +165,7 @@
         android:layout_alignParentBottom="true"
         android:layout_marginTop="0dp"
         android:layout_marginEnd="10dp"
-        android:layout_marginBottom="217dp"
+        android:layout_marginBottom="191dp"
         android:background="#353db1"
 
         android:text="Movimiento Tarjeta"
@@ -256,8 +207,8 @@
         android:layout_height="wrap_content"
         android:layout_alignTop="@+id/txtuid"
         android:layout_alignEnd="@+id/et1"
-        android:layout_marginTop="46dp"
-        android:layout_marginEnd="3dp"
+        android:layout_marginTop="23dp"
+        android:layout_marginEnd="2dp"
         android:background="#353db1"
         android:text="Mostrar Datos Dispositivo"
         android:theme="@android:style/Theme.Material" />

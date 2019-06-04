@@ -68,7 +68,7 @@ import cz.msebera.android.httpclient.Header;
 public class MainActivity extends AppCompatActivity  {
     /*Creacion de varibles*/
     private ArrayList<String> str_NfcTagId;
-    private EditText et1,et2,et3,et4;
+    private EditText et1,et2,et3,et4,et5;
     NfcAdapter nfcAdapter;
     ToggleButton tglReadWrite,toggleButton3,toggleButton4;
     EditText txtTagContent;
@@ -88,7 +88,11 @@ public class MainActivity extends AppCompatActivity  {
 //    private ConnectivityManager red =
 
 
-
+    @Override
+    public boolean onSupportNavigateUp() {
+        onBackPressed();
+        return true;
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         /*Inicializacion de variables*/
@@ -107,6 +111,7 @@ public class MainActivity extends AppCompatActivity  {
         button9 = (Button) findViewById(R.id.button9);
         button8 = (Button) findViewById(R.id.button8);
         et4 = (EditText) findViewById(R.id.et4);
+        et5 = (EditText) findViewById(R.id.et5);
         button7 = (Button) findViewById(R.id.button7);
         cliente = new AsyncHttpClient();
         broadcastReceiver = new BroadcastReceiver() {
@@ -127,6 +132,7 @@ public class MainActivity extends AppCompatActivity  {
         et2.setEnabled(false);
         et3.setEnabled(false);
         et4.setEnabled(false);
+        et5.setEnabled(false);
         button7.setEnabled(false);
         /*Este if verifica si esta habilitado el NFC*/
         if (!nfcAdapter.isEnabled()) {
@@ -174,6 +180,7 @@ public class MainActivity extends AppCompatActivity  {
                     et2.setText("");
                     et3.setText("");
                     et4.setText("");
+                    et5.setText("");
                     toggleButton3.setEnabled(false);
                     toggleButton4.setEnabled(false);
                 } else {
@@ -184,6 +191,7 @@ public class MainActivity extends AppCompatActivity  {
                     et2.setText("");
                     et3.setText("");
                     et4.setText("");
+                    et5.setText("");
                     toggleButton3.setEnabled(true);
                     toggleButton4.setEnabled(true);
                 }
@@ -302,8 +310,10 @@ public class MainActivity extends AppCompatActivity  {
           Datos d = new Datos();
           //int num;
         int numero= getIntent().getIntExtra("dispinicio",0);
+        int estacion= getIntent().getIntExtra("disestacion",0);
           d.setDispositivo(numero);
           d.setCod(num);
+          d.setEstacion(estacion);
           d.setNserie(txtuid.getText().toString());
           d.setDescripcion(opcion.trim());
           d.setFecha_registro(time);
@@ -316,7 +326,7 @@ public class MainActivity extends AppCompatActivity  {
               Log.d("check","esta en insertar");
              String url = "https://appnfc.000webhostapp.com/agregar.php?";
               Log.d("check","Datos:" +d.getDispositivo() +d.getCod()+d.getNserie()+d.getDescripcion()+d.getPrecio()+d.getFecha_registro());
-             final String parametros = "cod="+d.getCod()+"&nserie="+d.getNserie()+"&descripcion="+d.getDescripcion()+"&precio="+d.getPrecio()+"&fecha_registro="+d.getFecha_registro()+"&dispositivo="+d.getDispositivo();
+             final String parametros = "cod="+d.getCod()+"&nserie="+d.getNserie()+"&descripcion="+d.getDescripcion()+"&precio="+d.getPrecio()+"&fecha_registro="+d.getFecha_registro()+"&dispositivo="+d.getDispositivo()+"&estacion="+d.getEstacion();
              // Toast.makeText(this, parametros, Toast.LENGTH_SHORT).show();
               Log.d("parametros",parametros.toString());
               final String nseries = d.getNserie();
@@ -324,12 +334,13 @@ public class MainActivity extends AppCompatActivity  {
               final String precios = d.getPrecio();
               final String Fecha = d.getFecha_registro();
               final int disp = d.getDispositivo();
+              final int esta= d.getEstacion();
              cliente.post(url+parametros, new AsyncHttpResponseHandler() {
                  @Override
                  public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                      if(statusCode == 200) {
                          Toast.makeText(MainActivity.this, "Se guardo en servidor externo", Toast.LENGTH_SHORT).show();
-                         guardaralocal(nseries,descripcions,precios,Fecha,"Enviado",disp);
+                         guardaralocal(nseries,descripcions,precios,Fecha,"Enviado",disp,esta);
 
                      }}
 
@@ -337,7 +348,7 @@ public class MainActivity extends AppCompatActivity  {
                  @Override
                  public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
                      Toast.makeText(MainActivity.this, "No hay conexion con servidor externo", Toast.LENGTH_SHORT).show();
-                     guardaralocal(nseries,descripcions,precios,Fecha,"Pendiente",disp);
+                     guardaralocal(nseries,descripcions,precios,Fecha,"Pendiente",disp,esta);
                  }
              });
           }
@@ -446,7 +457,8 @@ public class MainActivity extends AppCompatActivity  {
                 }
                 Log.d("MainActivity", "numero:"+numerod);
 
-                NdefMessage ndefMessage = createNdefMessage(numerod + "|" + opcion + "|" + time);
+                NdefMessage ndefMessage = createNdefMessage(numerod + "|" + opcion + "|" + time + "|"
+                        + getIntent().getIntExtra("dispinicio",0) + "|" + getIntent().getIntExtra("disestacion",0));
                 /*metodo que escribi en el tag*/
                 writeNdefMessage(tag, ndefMessage);
 
@@ -472,6 +484,7 @@ public class MainActivity extends AppCompatActivity  {
             et2.setText("");
             et3.setText("");
             et4.setText("");
+            et5.setText("");
 
 }//limpia pantalla
     private void readTextFromMessage(NdefMessage ndefMessage) {
@@ -486,6 +499,7 @@ public class MainActivity extends AppCompatActivity  {
             et2.setText(cadena[1]);
             et3.setText("300");
             et4.setText(formateofechaLista(cadena[2]));
+            et5.setText(obtnerestacion(cadena[4]));
 
            // String substr=tagContent.substring(0,tagContent.indexOf("|"));
             //List<String> parts = Arrays.asList(tagContent.split("|"));
@@ -715,7 +729,7 @@ Log.d("check", "sync" );
          if(fila.getCount()>0){
        // Log.d("SYNC","");
        String parametros = "cod=" +fila.getInt(fila.getColumnIndex("cod")) + "&nserie=" + fila.getString(fila.getColumnIndex("nserie")) + "&descripcion=" + fila.getString(fila.getColumnIndex("descripcion")) + "&precio=" + fila.getString(fila.getColumnIndex("precio")) + "&fecha_registro=" + fila.getString(fila.getColumnIndex("fecha_registro"))
-               + "&dispositivo=" + fila.getString(fila.getColumnIndex("dispositivo"));
+               + "&dispositivo=" + fila.getString(fila.getColumnIndex("dispositivo")) + "&estacion=" + fila.getString(fila.getColumnIndex("estacion"));
                 final int numero= fila.getInt(fila.getColumnIndex("cod"));
                 final int disp= fila.getInt(fila.getColumnIndex("dispositivo"));
 
@@ -747,8 +761,10 @@ Log.d("check", "sync" );
     }
 
 
-}//sincronizacion
-    private void guardararemoto(final String nseries, final String descripcions, final String precios, final String Fecha, final int disp){
+}
+
+//sincronizacion
+  /*  private void guardararemoto(final String nseries, final String descripcions, final String precios, final String Fecha, final int disp){
     String url = "https://appnfc.000webhostapp.com/agregar2.php";
     Log.d("check","esta guardaremoto");
    // guardaralocal(nseries,descripcions,precios,Fecha,DbContract.SYNC_STATUS_FAILED);
@@ -761,7 +777,7 @@ if(checkred()){
                     JSONObject jsonObject = new JSONObject(response);
                     String Response = jsonObject.getString("response");
                     if (response.equals("OK")){
-                        guardaralocal(nseries,descripcions,precios,Fecha,"Enviado",disp);
+                        guardaralocal(nseries,descripcions,precios,Fecha,"Enviado",disp,esta);
 
                     }else{
                        Log.d("check","esta en el else");
@@ -783,7 +799,7 @@ if(checkred()){
             }
         })
         {
-            @Override
+           /* @Override
             protected Map<String, String> getParams() throws AuthFailureError {
                 Map<String,String> params = new HashMap<>();
                 params.put("nserie",nseries);
@@ -803,15 +819,15 @@ if(checkred()){
     }
 
 
-}//innsert remoto
-    private void guardaralocal(String nseries, String descripcions, String precios, String Fecha,String sync, int disp){
+}*///innsert remoto
+    private void guardaralocal(String nseries, String descripcions, String precios, String Fecha,String sync, int disp,int estacion){
     Log.d("check","esta guardalocal");
   //  AdminSQLiteOpenHelper adminSQLiteOpenHelper = new AdminSQLiteOpenHelper(this);
     AdminSQLiteOpenHelper admin = new AdminSQLiteOpenHelper(this,
             "administracion", null, 1);
     SQLiteDatabase bd = admin.getWritableDatabase();
     SQLiteDatabase database = admin.getWritableDatabase();
-    admin.guardainterna(nseries,descripcions,precios,Fecha,sync,disp,database);
+    admin.guardainterna(nseries,descripcions,precios,Fecha,sync,disp,database,estacion);
   //  leerdesdelocal();
     admin.close();
 
@@ -841,6 +857,30 @@ if(checkred()){
         protected void onStart() {
         super.onStart();
         registerReceiver(networkStateReceiver, new IntentFilter(android.net.ConnectivityManager.CONNECTIVITY_ACTION));
+    }
+
+
+
+    public String obtnerestacion(String disp){
+        String estacion="";
+        AdminSQLiteOpenHelper admin = new AdminSQLiteOpenHelper(this,
+                "administracion", null, 1);
+        SQLiteDatabase bd = admin.getWritableDatabase();
+
+        Cursor fila = bd.rawQuery(
+                "select estacion from estacion where cod = '" + disp + "'", null);
+        if(fila.moveToFirst()){
+            Log.d("datoslocal","esta en el if disp");
+            do{
+                estacion = fila.getString(0);
+                Log.d("datoslocal", String.valueOf(fila.getInt(0)));
+
+            }while (fila.moveToNext());
+
+        }
+
+        return  estacion;
+
     }
 }
 

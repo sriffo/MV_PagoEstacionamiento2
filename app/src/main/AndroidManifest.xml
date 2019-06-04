@@ -47,7 +47,11 @@
         <activity android:name=".MainActivity" />
         <activity
             android:name=".LoginActivitys"
-            android:label="@string/title_activity_login_activitys"></activity>
+            android:label="@string/title_activity_login_activitys" />
+        <activity
+            android:name=".Activity_menu"
+            android:label="@string/title_activity_menu"
+            android:theme="@style/AppTheme"></activity>
     </application>
 
 </manifest>

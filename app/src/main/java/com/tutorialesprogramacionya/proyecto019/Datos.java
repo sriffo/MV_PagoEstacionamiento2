@@ -1,7 +1,7 @@
 package com.tutorialesprogramacionya.proyecto019;
 
 public class Datos {
-    private int  cod,dispositivo;
+    private int  cod,dispositivo,estacion;
     private String status;
     private String nserie,descripcion,precio,fecha_registro;
 
@@ -9,14 +9,23 @@ public class Datos {
    public Datos() {
         }
 
-    public Datos(int dispositivo,int cod, String nserie, String descripcion, String precio, String fecha_registro, String status) {
-       this.dispositivo = dispositivo;
-       this.cod = cod;
+    public int getEstacion() {
+        return estacion;
+    }
+
+    public void setEstacion(int estacion) {
+        this.estacion = estacion;
+    }
+
+    public Datos(int cod, int dispositivo, int estacion, String status, String nserie, String descripcion, String precio, String fecha_registro) {
+        this.cod = cod;
+        this.dispositivo = dispositivo;
+        this.estacion = estacion;
+        this.status = status;
         this.nserie = nserie;
         this.descripcion = descripcion;
         this.precio = precio;
         this.fecha_registro = fecha_registro;
-        this.status = status;
     }
 
     public String getStatus() {

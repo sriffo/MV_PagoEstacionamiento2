@@ -1,47 +1,41 @@
 package com.tutorialesprogramacionya.proyecto019;
 
-import android.annotation.SuppressLint;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.ViewGroup;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-
 import java.util.ArrayList;
 
-public class ListadoAdapter extends RecyclerView.Adapter<ListadoAdapter.DatosViewHolder> {
+public class MovimientoAdapterOnline extends RecyclerView.Adapter<MovimientoAdapterOnline.DatosViewHolder> {
     private ArrayList<Datos> arrayList = new ArrayList<>();
 
-    public ListadoAdapter(ArrayList<Datos> arrayList){
+    public MovimientoAdapterOnline(ArrayList<Datos> arrayList){
         this.arrayList= arrayList;
     }
     @Override
     public DatosViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-     View view =LayoutInflater.from(parent.getContext()).inflate(R.layout.item_view,parent,false);
+     View view =LayoutInflater.from(parent.getContext()).inflate(R.layout.item_view_mov_online,parent,false);
         return new DatosViewHolder(view);
+
     }
 
     @Override
     public void onBindViewHolder(DatosViewHolder holder, int position) {
         holder.nserie.setText(arrayList.get(position).getNserie());
-        holder.operacion.setText(arrayList.get(position).getDescripcion().toString());
-        holder.tarifa.setText(arrayList.get(position).getPrecio().toString());
-        holder.fecha.setText(formateofechaLista(arrayList.get(position).getFecha_registro()));
-        holder.estado.setText(arrayList.get(position).getStatus());
-        String sync_status = arrayList.get(position).getStatus();
-        if(sync_status.equals("Enviado")){
-           holder.status.setImageResource(R.drawable.si);
-
-        }else{
-            holder.status.setImageResource(R.drawable.no2);
-        }
+        holder.operacion.setText(arrayList.get(position).getDescripcion());
+        holder.tarifa.setText(arrayList.get(position).getPrecio());
+        holder.fecha.setText(arrayList.get(position).getFecha_registro());
+    //    holder.estado.setText(arrayList.get(position).getStatus());
         String disp=String.valueOf(arrayList.get(position).getDispositivo());
         holder.dispositivo.setText(disp);
-        String est=String.valueOf(arrayList.get(position).getEstacion());
-        holder.estacion.setText(est);
+        Log.d("holder onlone","esta adentro");
+        holder.estacion.setText(String.valueOf(arrayList.get(position).getEstacion()));
 
 
 
@@ -62,17 +56,16 @@ public class ListadoAdapter extends RecyclerView.Adapter<ListadoAdapter.DatosVie
             operacion = (TextView) itemView.findViewById(R.id.textOperacion);
             tarifa= (TextView) itemView.findViewById(R.id.textTarifa);
             fecha=(TextView) itemView.findViewById(R.id.textFecha);
-            estado= (TextView)itemView.findViewById(R.id.textStatus);
             dispositivo = (TextView)itemView.findViewById(R.id.textdisp);
-             status=(ImageView)itemView.findViewById(R.id.imagen);
-             estacion=(TextView)itemView.findViewById(R.id.textest);
+            estacion = (TextView)itemView.findViewById(R.id.textest);
+
         }
 
 
 
     }
     public String formateofechaLista(String fecha){
-        Log.d("fecha",fecha);
+
         String dia,mes,año,hor,min,seg;
 
         dia=fecha.substring(0,2);
@@ -84,11 +77,35 @@ public class ListadoAdapter extends RecyclerView.Adapter<ListadoAdapter.DatosVie
 
         String fechaf=dia+"/"+mes+"/"+año+" "+hor+":"+min+":"+seg;
 
-        Log.d("fecha",fechaf);
 
 
 
         return fechaf;
     }
+
+    public String obtnerestacion(int disp){
+        String estacion="";
+        AdminSQLiteOpenHelper admin = new AdminSQLiteOpenHelper(this,
+                "administracion", null, 1);
+        SQLiteDatabase bd = admin.getWritableDatabase();
+
+        Cursor fila = bd.rawQuery(
+                "select estacion from estacion where cod =  " + 1, null);
+        if(fila.moveToFirst()){
+            Log.d("datoslocal","esta en el if disp");
+            do{
+                estacion = fila.getString(0);
+                Log.d("datoslocal", String.valueOf(fila.getInt(0)));
+
+            }while (fila.moveToNext());
+
+        }
+
+        return  estacion;
+
+    }
+
+
+
 
 }
